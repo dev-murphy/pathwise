@@ -34,6 +34,7 @@
     "semantic-release": "^25.0.3",
     "typescript": "~6.0.2",
     "vite": "^8.0.12",
+    "vite-plugin-webfont-dl": "^3.12.0",
     "vue-tsc": "^3.2.8"
   }
 }
