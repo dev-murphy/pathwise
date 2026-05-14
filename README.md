@@ -34,17 +34,32 @@ An interactive decision tree editor built with Vue Flow. Add questions, connect 
 
 ## Getting started
 
+**Prerequisites:** [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
+
 ```bash
 # Install dependencies
 pnpm install
+```
 
-# Start dev server
+### Development
+
+Starts a local dev server with hot module replacement at `http://localhost:5173`.
+
+```bash
 pnpm dev
+```
 
-# Type-check and build
+### Production
+
+Type-checks the project with `vue-tsc` then bundles with Vite. Output goes to `dist/`.
+
+```bash
 pnpm build
+```
 
-# Preview production build
+Preview the production build locally before deploying:
+
+```bash
 pnpm preview
 ```
 
