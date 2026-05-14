@@ -14,20 +14,29 @@ export default {
 </script>
 
 <template>
-  <!-- You can use the `BaseEdge` component to create your own custom edge more easily -->
-  <BaseEdge :path="path[0]" />
+  <BaseEdge
+    :path="path[0]"
+    :style="{
+      stroke: 'var(--color-accent)',
+      strokeWidth: selected ? 2.5 : 1.5,
+      opacity: selected ? 1 : 0.7,
+      transition: 'stroke-width 0.15s, opacity 0.15s',
+    }"
+  />
 
-  <!-- Use the `EdgeLabelRenderer` to escape the SVG world of edges and render your own custom label in a `<div>` ctx -->
-  <EdgeLabelRenderer>
+  <EdgeLabelRenderer v-if="label">
     <div
       :style="{
         pointerEvents: 'all',
         position: 'absolute',
         transform: `translate(-50%, -50%) translate(${path[1]}px,${path[2]}px)`,
       }"
-      class="nodrag nopan text-accent"
+      class="nodrag nopan font-mono font-bold text-[10px] px-2 py-0.5 rounded-full border transition-colors duration-150"
+      :class="selected
+        ? 'bg-accent text-bg border-accent'
+        : 'bg-surface border-border text-accent'"
     >
-      {{ data.hello }}
+      {{ label }}
     </div>
   </EdgeLabelRenderer>
 </template>
