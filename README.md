@@ -104,23 +104,6 @@ Click **Reorganize** in the node list header to auto-layout the graph as a top-d
 
 Releases are automated via [semantic-release](https://github.com/semantic-release/semantic-release) on push to `main`. See [CHANGELOG.md](./CHANGELOG.md) for history.
 
-Commit types and their release impact:
-
-| Type | Section | Release |
-|---|---|---|
-| `feat` | ✨ Features | minor |
-| `fix` | 🐛 Bug Fixes | patch |
-| `style` | 💅 UI Updates | patch |
-| `improvement` | 📈 Improvements | patch |
-| `refactor` | 🔨 Code Refactors | patch |
-| `perf` | ⚡ Performance | patch |
-| `chore` | 🧹 Miscellaneous | patch |
-| `docs` | 📖 Documentation | patch |
-| `build` | 🏗️ Build System | patch |
-| `ci` | ⚙️ CI/CD | patch |
-| `test` | 🧪 Tests | patch |
-| `revert` | ⏪ Reverts | patch |
-
 ---
 
 ## License
