@@ -1,3 +1,5 @@
+import type { Node, Edge } from '@vue-flow/core'
+
 export type FieldType =
   | 'text'
   | 'textarea'
@@ -35,4 +37,25 @@ export interface QuestionNodeData {
   options: FieldOption[]
   isStart: boolean
   required: boolean
+  maxLength?: number
+  placeholder?: string
+}
+
+export type FlowStatus = 'draft' | 'published'
+
+export interface FlowAnalytics {
+  visits: number
+  completions: number
+}
+
+export interface Flow {
+  id: string
+  name: string
+  status: FlowStatus
+  createdAt: number
+  updatedAt: number
+  publishedAt?: number
+  analytics: FlowAnalytics
+  nodes: Node[]
+  edges: Edge[]
 }
