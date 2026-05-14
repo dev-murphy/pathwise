@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/dev-murphy/pathwise/compare/v1.2.0...v1.2.1) (2026-05-14)
+
+### 🧹 Miscellaneous
+
+* add auto import plugins and vueuse to app, refactored x-select component ([a2fff6f](https://github.com/dev-murphy/pathwise/commit/a2fff6ff02c547691d6f1619a86fa2de47e5839c))
+* add favicon, logo and seo meta tags to app ([1f07d75](https://github.com/dev-murphy/pathwise/commit/1f07d753f8603316880ea2d48a0170977f7c31b7))
+
 ## [1.2.0](https://github.com/dev-murphy/pathwise/compare/v1.1.0...v1.2.0) (2026-05-14)
 
 ### ✨ Features
