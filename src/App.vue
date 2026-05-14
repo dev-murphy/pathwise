@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import XButton from "~/components/common/XButton.vue";
-import XSelect from "~/components/common/XSelect.vue";
-
 const selectOptions = ref(["Option 1", "Option 2", "Option 3"]);
 const selectValue = ref(selectOptions.value[0]);
 </script>
