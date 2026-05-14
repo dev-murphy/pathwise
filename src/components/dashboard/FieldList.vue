@@ -67,7 +67,7 @@ function nodeListClass(node: { id: string; selected?: boolean }, index: number) 
       </span>
 
       <!-- Label -->
-      <span class="truncate leading-relaxed grow text-xs font-mono">{{ node.data.label }}</span>
+      <span class="truncate leading-relaxed grow text-text text-xs font-mono">{{ node.data.label }}</span>
 
       <!-- Required asterisk -->
       <span v-if="node.data.required" class="shrink-0 text-accent-3 font-bold text-xs">*</span>

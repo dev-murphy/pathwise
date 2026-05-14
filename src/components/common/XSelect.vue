@@ -81,7 +81,7 @@ function iconFor(index: number): Component | null {
           v-if="hasDefaultValue"
           class="px-2 py-1.5 text-left rounded cursor-pointer text-sm"
           :class="{
-            'bg-accent text-bg font-bold': '' === modelValue,
+            'bg-accent text-muted font-bold': '' === modelValue,
             'hover:bg-accent/10 hover:text-accent text-muted': '' !== modelValue,
           }"
           @click="$emit('update:modelValue', ''); isDropdownOpen = false"
@@ -94,7 +94,7 @@ function iconFor(index: number): Component | null {
           class="flex items-center gap-x-2 px-2 py-1.5 text-left rounded cursor-pointer text-sm"
           :class="{
             'bg-accent text-bg font-bold': option === modelValue,
-            'hover:bg-accent/10 hover:text-accent': option !== modelValue,
+            'text-muted hover:bg-accent/10 hover:text-accent': option !== modelValue,
           }"
           @click="$emit('update:modelValue', option); isDropdownOpen = false"
         >
