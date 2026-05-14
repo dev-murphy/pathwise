@@ -35,7 +35,9 @@ const typeLabel = computed(() =>
         {{ typeLabel }}
       </span>
     </div>
-    <p class="text-text text-xs font-mono leading-relaxed whitespace-pre-wrap break-words">{{ data.label }}</p>
+    <p class="text-text text-xs font-mono leading-relaxed whitespace-pre-wrap break-words">
+      {{ data.label }}<span v-if="data.required" class="text-accent-3 font-bold ml-0.5">*</span>
+    </p>
     <Handle type="target" :position="Position.Top" class="!bg-accent/50 !border-accent" />
     <Handle type="source" :position="Position.Bottom" class="!bg-accent !border-accent" />
   </div>
