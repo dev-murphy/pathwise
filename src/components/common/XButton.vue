@@ -10,6 +10,8 @@ withDefaults(
     size: "compact",
   },
 );
+
+defineEmits<{ (e: "trigger"): void }>();
 </script>
 
 <template>
@@ -22,6 +24,7 @@ withDefaults(
       'px-5 ': size === 'compact',
       'w-full': size === 'expand',
     }"
+    @click="$emit('trigger')"
   >
     {{ text }}
   </button>

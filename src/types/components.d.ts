@@ -12,6 +12,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ChevronDown: typeof import('./../components/icons/ChevronDown.vue')['default']
+    SpecialEdge: typeof import('./../components/flow/SpecialEdge.vue')['default']
+    SpecialNode: typeof import('./../components/flow/SpecialNode.vue')['default']
     XButton: typeof import('./../components/common/XButton.vue')['default']
     XInput: typeof import('./../components/common/XInput.vue')['default']
     XSelect: typeof import('./../components/common/XSelect.vue')['default']

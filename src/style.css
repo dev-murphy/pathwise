@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* @import '@vue-flow/controls/dist/style.css'  */
+@import '@vue-flow/core/dist/style.css';
+@import '@vue-flow/core/dist/theme-default.css';
+
 @theme {
   --color-bg: #0d0d0f;
   --color-surface: #18181c;
