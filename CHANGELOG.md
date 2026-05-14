@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.0](https://github.com/dev-murphy/pathwise/compare/v1.5.0...v1.6.0) (2026-05-14)
+
+### ✨ Features
+
+* **forms:** add per-field placeholder and max character limit to builder ([387d392](https://github.com/dev-murphy/pathwise/commit/387d392127b060a2887b2e64d9b2d56c9c545c7b))
+
+### 🔨 Code Refactors
+
+* migrate to file-based routing with per-flow builder, preview, and stats pages ([ef8cf0c](https://github.com/dev-murphy/pathwise/commit/ef8cf0cce58b43a5dfa7cb26eea71afacf5f0b97))
+
 ## [1.5.0](https://github.com/dev-murphy/pathwise/compare/v1.4.0...v1.5.0) (2026-05-14)
 
 ### ✨ Features

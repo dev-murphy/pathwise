@@ -1,7 +1,7 @@
 {
   "name": "pathwise",
   "private": false,
-  "version": "1.5.0",
+  "version": "1.6.0",
   "type": "module",
   "description": "A visual flow-based form builder. Design multi-step forms by connecting typed field nodes on an interactive canvas.",
   "homepage": "https://pathwise-two.vercel.app/",
