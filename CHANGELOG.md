@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0](https://github.com/dev-murphy/pathwise/compare/v1.0.0...v1.1.0) (2026-05-14)
+
+### ✨ Features
+
+* remove boilerplate code ([7a5b1c7](https://github.com/dev-murphy/pathwise/commit/7a5b1c7a31a6830a43ac546888f02ba63641d59c))
+
+### 🧹 Miscellaneous
+
+* add alias to app ([6ce7714](https://github.com/dev-murphy/pathwise/commit/6ce77143fa5095030c7f722d35fd9927dca30c50))
+* add tailwindcss to app ([e8bcc58](https://github.com/dev-murphy/pathwise/commit/e8bcc582e09016c3c40da520dcbe38ad137b1c82))
+
+### 📖 Documentation
+
+* add MIT license ([15bd24f](https://github.com/dev-murphy/pathwise/commit/15bd24f746ddeb54d3a8e952a4c485300bf3655e))
+
 ## 1.0.0 (2026-05-14)
 
 ### ✨ Features
