@@ -1,8 +1,15 @@
 {
   "name": "pathwise",
-  "private": true,
+  "private": false,
   "version": "0.0.0",
   "type": "module",
+  "description": "An interactive flowchart tool for building yes/no decision trees. Connect questions to outcomes visually with Vue Flow. ",
+  "homepage": "https://pathwise-two.vercel.app/",
+  "author": {
+    "name": "Murphy Facey",
+    "url": "https://github.com/dev-murphy/"
+  },
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
