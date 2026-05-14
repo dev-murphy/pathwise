@@ -74,7 +74,7 @@ import logoUrl from '~/assets/images/logo.png'
     </main>
 
     <footer class="py-4 text-center text-[11px] font-mono text-muted border-t border-border">
-      MIT License · Built by Murphy Facey
+      MIT License · Built by <a href="https://github.com/dev-murphy" class="underline hover:text-accent transition-colors duration-300" target="_blank">Murphy Facey</a>  · <a href="https://github.com/dev-murphy/pathwise" target="_blank" class="underline hover:text-accent">View Source</a>
     </footer>
   </div>
 </template>
