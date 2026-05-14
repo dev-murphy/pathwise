@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0](https://github.com/dev-murphy/pathwise/compare/v1.2.1...v1.3.0) (2026-05-14)
+
+### ✨ Features
+
+* added vue flow to app ([c8de110](https://github.com/dev-murphy/pathwise/commit/c8de110b894d10d6022d072bfa9b6dc885295858))
+
 ## [1.2.1](https://github.com/dev-murphy/pathwise/compare/v1.2.0...v1.2.1) (2026-05-14)
 
 ### 🧹 Miscellaneous
