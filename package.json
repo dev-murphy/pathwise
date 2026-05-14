@@ -3,7 +3,7 @@
   "private": false,
   "version": "1.4.0",
   "type": "module",
-  "description": "An interactive flowchart tool for building yes/no decision trees. Connect questions to outcomes visually with Vue Flow. ",
+  "description": "A visual flow-based form builder. Design multi-step forms by connecting typed field nodes on an interactive canvas.",
   "homepage": "https://pathwise-two.vercel.app/",
   "author": {
     "name": "Murphy Facey",
@@ -22,7 +22,8 @@
     "@vue-flow/core": "^1.48.2",
     "@vueuse/core": "^14.3.0",
     "tailwindcss": "^4.3.0",
-    "vue": "^3.5.34"
+    "vue": "^3.5.34",
+    "vue-router": "^5.0.7"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
