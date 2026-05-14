@@ -13,7 +13,10 @@ const selectValue = ref(selectOptions.value[0]);
       <div
         class="max-w-350 flex items-center justify-between text-text mx-auto"
       >
-        <p class="text-accent font-head font-black uppercase select-none">Pathwise</p>
+      <div class="flex items-center gap-x-2 select-none">
+        <img src="./assets/images/logo.png" alt="logo" class="w-8 aspect-square">
+        <p class="text-accent text-xl font-head font-black uppercase">Pathwise</p>
+      </div>
 
         <div class="flex gap-x-2">
           <XButton text="Reset" variants="default" />
