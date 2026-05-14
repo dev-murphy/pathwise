@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/dev-murphy/pathwise/compare/v1.3.0...v1.4.0) (2026-05-14)
+
+### ✨ Features
+
+* **app:** implement decision tree editor with question/answer flow ([8bb14a3](https://github.com/dev-murphy/pathwise/commit/8bb14a3ae1af46744e07de9248dea0a5ff085404))
+* **flow:** add QuestionNode and FlowEdge components, remove unused scaffolding ([559bcac](https://github.com/dev-murphy/pathwise/commit/559bcac5cde9332a901c66bb960050d65b4e0b1a))
+* **ui:** add displayOptions prop to XSelect for label/value separation ([6d006a2](https://github.com/dev-murphy/pathwise/commit/6d006a293dbbdb4be802b7ba4c45541cf31750d5))
+
+### 📖 Documentation
+
+* move commit guidelines to CONTRIBUTING.md, simplify README releases section ([4ab961d](https://github.com/dev-murphy/pathwise/commit/4ab961d52949fe0232ad7ed8e32e9cc4cbf9d7de))
+* **readme:** expand getting started with dev and production build instructions ([b9a6c9a](https://github.com/dev-murphy/pathwise/commit/b9a6c9ab74d50e80957db997376bffa80f7501f8))
+* **readme:** rewrite readme to reflect current decision tree editor ([f627e58](https://github.com/dev-murphy/pathwise/commit/f627e58c615740a11bc99571726595c29d2035f6))
+
 ## [1.3.0](https://github.com/dev-murphy/pathwise/compare/v1.2.1...v1.3.0) (2026-05-14)
 
 ### ✨ Features
