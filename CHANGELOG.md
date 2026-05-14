@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0](https://github.com/dev-murphy/pathwise/compare/v1.1.0...v1.2.0) (2026-05-14)
+
+### ✨ Features
+
+* add basic UI for app ([6ad4227](https://github.com/dev-murphy/pathwise/commit/6ad42278050a91c404747f07d6472784dfbd8906))
+
 ## [1.1.0](https://github.com/dev-murphy/pathwise/compare/v1.0.0...v1.1.0) (2026-05-14)
 
 ### ✨ Features

@@ -1,7 +1,7 @@
 {
   "name": "pathwise",
   "private": false,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "An interactive flowchart tool for building yes/no decision trees. Connect questions to outcomes visually with Vue Flow. ",
   "homepage": "https://pathwise-two.vercel.app/",
