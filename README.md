@@ -1,6 +1,6 @@
 # Pathwise
 
-An interactive decision tree editor built with Vue Flow. Add questions, connect them with labeled answers, and visualize your logic as a directed graph.
+A visual flow-based form builder. Design multi-step forms by placing typed field nodes on a canvas and connecting them to define the flow between fields.
 
 **Live demo:** https://pathwise-two.vercel.app/
 
@@ -8,14 +8,17 @@ An interactive decision tree editor built with Vue Flow. Add questions, connect 
 
 ## Features
 
-- **Question nodes** — add questions as nodes on a canvas
-- **Answers as edges** — connections between questions carry an answer label (e.g. "Yes", "No", "Maybe")
-- **Start node** — mark any question as the entry point of your tree; auto-assigned to the first question added
-- **Inline editing** — click any node or edge on the canvas to edit its text directly in the sidebar
-- **Connect panel** — wire up questions via dropdowns with duplicate-path prevention
-- **Reorganize** — auto-layout the graph as a top-down tree from the start node using BFS
-- **Node list** — scrollable list of all questions with selection highlights and start node management
-- **Edge selection** — clicking an edge highlights both connected nodes in the sidebar
+- **Typed field nodes** — each node is a form field with one of seven types: Text, Textarea, Number, Checkbox, Dropdown, Radio, or Multiselect
+- **Drag to connect** — drag from a node's handle to another to create a path between fields
+- **Conditional branching** — Dropdown and Radio fields support multiple outgoing paths; each branch is labeled with a free-text condition
+- **Single-path fields** — Text, Textarea, Number, Checkbox, and Multiselect always proceed to the next field with no branching prompt
+- **Options editor** — manage Dropdown, Radio, and Multiselect options directly in the sidebar
+- **Required toggle** — mark any field as required
+- **Inline editing** — click any node or edge on the canvas to edit it in the sidebar
+- **Delete connections** — select an edge to edit its label or remove it entirely
+- **Start node** — mark any field as the entry point; auto-assigned to the first field added
+- **Reorganize** — auto-layout the canvas as a top-down tree from the start node using BFS
+- **Field list** — scrollable list of all fields with type labels, selection highlights, and start node management
 
 ---
 
@@ -71,53 +74,73 @@ pnpm preview
 src/
 ├── App.vue                      # Root component — all state and sidebar logic
 ├── style.css                    # Tailwind + Vue Flow styles + design tokens
+├── types/
+│   ├── flow.ts                  # Domain types: FieldType, FieldOption, QuestionNodeData
+│   ├── auto-imports.d.ts        # Generated auto-import declarations
+│   └── components.d.ts          # Generated component declarations
 ├── components/
 │   ├── common/
 │   │   ├── XButton.vue          # Reusable button (primary / default variants)
 │   │   ├── XInput.vue           # Input stub
 │   │   └── XSelect.vue          # Custom dropdown with separate value/display label
 │   ├── flow/
-│   │   ├── QuestionNode.vue     # Custom Vue Flow node (Start indicator, selected state)
+│   │   ├── QuestionNode.vue     # Custom Vue Flow node (field type pill, selected state)
 │   │   └── FlowEdge.vue         # Custom Vue Flow edge (labeled, selected state)
 │   └── icons/
 │       └── ChevronDown.vue      # SVG icon
-└── types/
-    ├── auto-imports.d.ts        # Generated auto-import declarations
-    └── components.d.ts          # Generated component declarations
 ```
 
 ---
 
 ## How it works
 
-**Questions** are nodes. **Answers** are directed edges between nodes — each edge carries a required label that represents the answer a user would give to move from one question to the next.
+Each **node** is a form field. **Edges** define the path a user takes from one field to the next. Branching is determined by the source field's type.
 
-### Adding a question
-1. Type the question text in the **Add Question** panel
-2. Click **Add Question** — the node appears on the canvas
+### Field types
 
-### Editing a question or answer
-- Click a **node** on the canvas → the sidebar switches to **Edit Question** mode with the text pre-filled
-- Click an **edge** on the canvas → the sidebar switches to **Edit Answer** mode with the label pre-filled
-- Click **Save Changes** to apply
+| Type | Branching | Options |
+|---|---|---|
+| Text | Single path | — |
+| Textarea | Single path | — |
+| Number | Single path | — |
+| Checkbox | Single path | — |
+| Multiselect | Single path | Configurable list |
+| Dropdown | Multi-path | Configurable list |
+| Radio | Multi-path | Configurable list |
 
-### Connecting questions
-1. Select **From** (the source question) and **To** (the target question) in the **Connect** panel
-2. The **To** dropdown automatically excludes the source node and any already-connected targets
-3. Enter the **Answer text** for the edge label
-4. Click **Connect**
+### Adding a field
+1. Enter a label in the **Add Field** panel
+2. Choose a type from the dropdown
+3. For Dropdown, Radio, or Multiselect — add options using the options editor
+4. Toggle **Required** if needed
+5. Click **Add Field**
+
+### Connecting fields
+Drag from the bottom handle of a source node to the top handle of a target node:
+- **Single-path types** — the connection is created immediately
+- **Multi-path types** (Dropdown, Radio) — the sidebar prompts for a branch label; click **Save** to confirm or **Cancel** to discard
+
+### Editing a field or connection
+- Click a **node** on the canvas → the sidebar switches to **Edit Field** with all values pre-filled
+- Click an **edge** on the canvas → the sidebar switches to **Edit Answer** with the label pre-filled; you can also delete the connection from here
 
 ### Start node
-The first question added is automatically marked as the start. To change it, click **Set start** on any other question in the node list.
+The first field added is automatically marked as the start. To change it, click **Set start** on any other field in the field list.
 
 ### Reorganize
-Click **Reorganize** in the node list header to auto-layout the graph as a top-down tree from the start node. Disconnected nodes are placed below the tree.
+Click **Reorganize** in the field list header to auto-layout the canvas as a top-down tree from the start node. Disconnected nodes are placed below the tree.
 
 ---
 
 ## Releases
 
 Releases are automated via [semantic-release](https://github.com/semantic-release/semantic-release) on push to `main`. See [CHANGELOG.md](./CHANGELOG.md) for history.
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for commit message guidelines.
 
 ---
 
