@@ -1,421 +1,198 @@
 <script setup lang="ts">
-import type { Node, Edge, Connection } from '@vue-flow/core'
-import { useVueFlow } from '@vue-flow/core'
-import type { NodeMouseEvent, EdgeMouseEvent } from '@vue-flow/core'
-import { MULTI_BRANCH_TYPES, OPTIONS_TYPES } from '~/types/flow'
-import type { FieldType, FieldOption, QuestionNodeData } from '~/types/flow'
-import { useFormStore } from '~/composables/useFormStore'
+import { useRouter } from 'vue-router'
+import { useFlowStore } from '~/composables/useFlowStore'
+import type { Flow } from '~/types/flow'
 
-// ─── State ────────────────────────────────────────────────────────────────────
+const router = useRouter()
+const { migrateLegacy, listFlows, createFlow, renameFlow, updateStatus, deleteFlow } = useFlowStore()
 
-const nodes = ref<Node[]>([])
-const edges = ref<Edge[]>([])
-const { fitView } = useVueFlow()
-const { save } = useFormStore()
+migrateLegacy()
 
-// ─── Selection ────────────────────────────────────────────────────────────────
+const flows = ref<Flow[]>(listFlows())
 
-const selectedNodeId = ref<string | null>(null)
-const selectedEdgeId = ref<string | null>(null)
-const selectedEdgeNodeIds = ref<Set<string>>(new Set())
-
-// ─── Start node ───────────────────────────────────────────────────────────────
-
-const startNodeId = ref<string | null>(null)
-let nextId = 1
-
-function setStartNode(id: string) {
-  nodes.value.forEach((n) => { n.data = { ...n.data, isStart: n.id === id } })
-  startNodeId.value = id
+function refresh() {
+  flows.value = listFlows()
 }
 
-// ─── Panel mode ───────────────────────────────────────────────────────────────
+// ─── Create ───────────────────────────────────────────────────────────────────
 
-type PanelMode = 'addField' | 'editField' | 'editAnswer' | 'pendingConnection'
-
-const pendingConnection = ref<{ source: string; target: string } | null>(null)
-const pendingOptionId = ref<string>('')
-
-const panelMode = computed((): PanelMode => {
-  if (pendingConnection.value !== null) return 'pendingConnection'
-  if (selectedEdgeId.value !== null) return 'editAnswer'
-  if (selectedNodeId.value !== null) return 'editField'
-  return 'addField'
-})
-
-// ─── Field form state ─────────────────────────────────────────────────────────
-
-const fieldLabel = ref('')
-const fieldType = ref<FieldType>('text')
-const fieldRequired = ref(false)
-const fieldOptions = ref<FieldOption[]>([])
-const newOptionText = ref('')
-
-const routeTargetOptions = computed(() =>
-  (nodes.value as Node[])
-    .filter((n: Node) => n.id !== selectedNodeId.value)
-    .map((n: Node) => ({ id: n.id, label: n.data.label as string }))
-)
-
-function onAddOption() {
-  const text = newOptionText.value.trim()
-  if (!text) return
-  fieldOptions.value.push({ id: String(Date.now()), label: text })
-  newOptionText.value = ''
+function onCreate() {
+  const flow = createFlow('Untitled flow')
+  void router.push(`/flows/${flow.id}`)
 }
 
-function onRemoveOption(id: string) {
-  fieldOptions.value = fieldOptions.value.filter((o) => o.id !== id)
+// ─── Open ─────────────────────────────────────────────────────────────────────
+
+function onOpen(id: string) {
+  void router.push(`/flows/${id}`)
 }
 
-function onSetOptionTarget(optionId: string, targetNodeId: string) {
-  const opt = fieldOptions.value.find((o) => o.id === optionId)
-  if (opt) opt.targetNodeId = targetNodeId || undefined
+// ─── Inline rename ────────────────────────────────────────────────────────────
+
+const renamingId = ref<string | null>(null)
+const renameDraft = ref('')
+
+function startRename(id: string, name: string) {
+  renamingId.value = id
+  renameDraft.value = name
 }
 
-function resetFieldForm() {
-  fieldLabel.value = ''
-  fieldType.value = 'text'
-  fieldRequired.value = false
-  fieldOptions.value = []
-  newOptionText.value = ''
-}
-
-// ─── Edge sync ────────────────────────────────────────────────────────────────
-
-function clearOutgoingEdges(nodeId: string) {
-  const filtered: Edge[] = (edges.value as Edge[]).filter((e: Edge) => e.source !== nodeId)
-  edges.value = filtered
-}
-
-function syncOptionEdges(nodeId: string, options: FieldOption[]) {
-  clearOutgoingEdges(nodeId)
-  options.forEach((opt) => {
-    if (!opt.targetNodeId) return
-    const edgeId = `e${nodeId}->${opt.targetNodeId}`
-    edges.value.push({ id: edgeId, type: 'flow', source: nodeId, target: opt.targetNodeId, label: opt.label })
-  })
-}
-
-// ─── Add / Save field ─────────────────────────────────────────────────────────
-
-function onSave() {
-  if (panelMode.value === 'editAnswer') { onSaveEdgeLabel(); return }
-
-  const text = fieldLabel.value.trim()
-  if (!text) return
-
-  const isOptionType = OPTIONS_TYPES.includes(fieldType.value)
-  const data: QuestionNodeData = {
-    label: text,
-    fieldType: fieldType.value,
-    options: [...fieldOptions.value],
-    isStart: false,
-    required: fieldRequired.value,
+function commitRename() {
+  if (!renamingId.value) return
+  const trimmed = renameDraft.value.trim()
+  if (trimmed) {
+    renameFlow(renamingId.value, trimmed)
+    refresh()
   }
-
-  if (panelMode.value === 'editField' && selectedNodeId.value) {
-    const nodeId = selectedNodeId.value
-    const target = (nodes.value as Node[]).find((n: Node) => n.id === nodeId)
-    if (target) {
-      const wasStart = target.data.isStart as boolean
-      target.data = { ...data, isStart: wasStart } as Record<string, unknown>
-    }
-    if (isOptionType) syncOptionEdges(nodeId, fieldOptions.value)
-  } else {
-    const id = String(nextId++)
-    const isFirst = nodes.value.length === 0
-    nodes.value.push({
-      id,
-      type: 'question',
-      position: { x: 100 + Math.random() * 400, y: 80 + Math.random() * 300 },
-      data: { ...data, isStart: isFirst },
-    })
-    if (isFirst) startNodeId.value = id
-    resetFieldForm()
-  }
+  renamingId.value = null
 }
 
-// ─── Edge editing ─────────────────────────────────────────────────────────────
-
-const edgeLabelText = ref('')
-
-function onSaveEdgeLabel() {
-  if (!selectedEdgeId.value) return
-  const target = (edges.value as Edge[]).find((e: Edge) => e.id === selectedEdgeId.value)
-  if (target) target.label = edgeLabelText.value.trim()
+function cancelRename() {
+  renamingId.value = null
 }
 
-function onDeleteEdge() {
-  if (!selectedEdgeId.value) return
-  const idToRemove = selectedEdgeId.value
-  const filtered: Edge[] = (edges.value as Edge[]).filter((e: Edge) => e.id !== idToRemove)
-  edges.value = filtered
-  selectedEdgeId.value = null
-  selectedEdgeNodeIds.value = new Set()
-  edgeLabelText.value = ''
+// ─── Publish toggle ───────────────────────────────────────────────────────────
+
+function togglePublish(id: string, status: string) {
+  updateStatus(id, status === 'published' ? 'draft' : 'published')
+  refresh()
 }
 
-// ─── Canvas events ────────────────────────────────────────────────────────────
+// ─── Delete ───────────────────────────────────────────────────────────────────
 
-function selectNode(node: { id: string; data?: Record<string, unknown> }) {
-  selectedNodeId.value = node.id
-  selectedEdgeId.value = null
-  selectedEdgeNodeIds.value = new Set()
-  edgeLabelText.value = ''
-  pendingConnection.value = null
-  pendingOptionId.value = ''
-  const data = node.data as Partial<QuestionNodeData> | undefined
-  fieldLabel.value = String(data?.label ?? '')
-  fieldType.value = (data?.fieldType as FieldType) ?? 'text'
-  fieldRequired.value = data?.required ?? false
-  fieldOptions.value = data?.options ? [...(data.options as FieldOption[])] : []
+function onDelete(id: string, name: string) {
+  if (!window.confirm(`Delete "${name}"? This can't be undone.`)) return
+  deleteFlow(id)
+  refresh()
 }
 
-function onNodeClick(payload: NodeMouseEvent) {
-  selectNode(payload.node)
-}
+// ─── Relative time ────────────────────────────────────────────────────────────
 
-function onEdgeClick(payload: EdgeMouseEvent) {
-  selectedNodeId.value = null
-  selectedEdgeId.value = payload.edge.id
-  selectedEdgeNodeIds.value = new Set([payload.edge.source, payload.edge.target])
-  edgeLabelText.value = String(payload.edge.label ?? '')
-  pendingConnection.value = null
-  pendingOptionId.value = ''
-  resetFieldForm()
-}
-
-function onPaneClick() {
-  selectedNodeId.value = null
-  selectedEdgeId.value = null
-  selectedEdgeNodeIds.value = new Set()
-  edgeLabelText.value = ''
-  pendingConnection.value = null
-  pendingOptionId.value = ''
-  resetFieldForm()
-}
-
-// ─── Drag-to-connect ──────────────────────────────────────────────────────────
-
-const pendingSourceOptions = computed((): FieldOption[] => {
-  if (!pendingConnection.value) return []
-  const src = (nodes.value as Node[]).find((n: Node) => n.id === pendingConnection.value!.source)
-  return (src?.data.options as FieldOption[]) ?? []
-})
-
-function onConnect(connection: Connection) {
-  const sourceNode = (nodes.value as Node[]).find((n: Node) => n.id === connection.source)
-  const srcFieldType = (sourceNode?.data as Partial<QuestionNodeData>)?.fieldType ?? 'text'
-  const isMultiBranch = MULTI_BRANCH_TYPES.includes(srcFieldType)
-
-  if (isMultiBranch) {
-    pendingConnection.value = { source: connection.source!, target: connection.target! }
-    pendingOptionId.value = ''
-    selectedNodeId.value = null
-    selectedEdgeId.value = null
-  } else {
-    pushEdge(connection.source!, connection.target!, '')
-  }
-}
-
-function pushEdge(source: string, target: string, label: string) {
-  const edgeId = `e${source}->${target}`
-  if (edges.value.some((e) => e.id === edgeId)) return
-  edges.value.push({ id: edgeId, type: 'flow', source, target, label })
-}
-
-function onConfirmConnection() {
-  if (!pendingConnection.value) return
-  const { source, target } = pendingConnection.value
-  if (pendingOptionId.value) {
-    const srcNode = (nodes.value as Node[]).find((n: Node) => n.id === source)
-    if (srcNode) {
-      const opts = (srcNode.data.options as FieldOption[]) ?? []
-      const opt = opts.find((o) => o.id === pendingOptionId.value)
-      if (opt) opt.targetNodeId = target
-      srcNode.data = { ...srcNode.data, options: [...opts] } as Record<string, unknown>
-      syncOptionEdges(source, opts)
-    }
-  } else {
-    pushEdge(source, target, '')
-  }
-  pendingConnection.value = null
-  pendingOptionId.value = ''
-}
-
-function onCancelConnection() {
-  pendingConnection.value = null
-  pendingOptionId.value = ''
-}
-
-// ─── Drag-to-reorder ──────────────────────────────────────────────────────────
-
-const draggingIndex = ref<number | null>(null)
-
-function onDragStart(index: number) { draggingIndex.value = index }
-
-function onDragOver(index: number) {
-  if (draggingIndex.value === null || draggingIndex.value === index) return
-  const reordered = [...nodes.value]
-  const [moved] = reordered.splice(draggingIndex.value, 1)
-  reordered.splice(index, 0, moved)
-  nodes.value = reordered
-  draggingIndex.value = index
-}
-
-function onDragEnd() { draggingIndex.value = null }
-
-// ─── Reorganize ───────────────────────────────────────────────────────────────
-
-function reorganize() {
-  if (nodes.value.length === 0) return
-  const H_GAP = 280, V_GAP = 180, DISCONNECTED_X = 600
-  const outgoing = new Map<string, string[]>()
-  nodes.value.forEach((n) => outgoing.set(n.id, []))
-  ;(edges.value as Edge[]).forEach((e: Edge) => { outgoing.get(e.source)?.push(e.target) })
-
-  const positions = new Map<string, { x: number; y: number }>()
-  const connected = new Set<string>((edges.value as Edge[]).flatMap((e: Edge) => [e.source, e.target]))
-  let row = 0, disconnectedRow = 0
-
-  nodes.value.forEach((n) => {
-    if (!connected.has(n.id) && nodes.value.length > 1) {
-      positions.set(n.id, { x: DISCONNECTED_X, y: disconnectedRow++ * V_GAP })
-      return
-    }
-    const targets = outgoing.get(n.id) ?? []
-    if (targets.length <= 1) {
-      positions.set(n.id, { x: 0, y: row++ * V_GAP })
-    } else {
-      positions.set(n.id, { x: 0, y: row++ * V_GAP })
-      const totalWidth = (targets.length - 1) * H_GAP
-      targets.forEach((tid, i) => {
-        if (!positions.has(tid)) positions.set(tid, { x: i * H_GAP - totalWidth / 2, y: row * V_GAP })
-      })
-      row++
-    }
-  })
-
-  nodes.value.forEach((n) => { const pos = positions.get(n.id); if (pos) n.position = { ...pos } })
-  nextTick(() => fitView({ padding: 0.2 }))
-}
-
-// ─── Preview / Share ──────────────────────────────────────────────────────────
-
-function onPreview(): void {
-  save(nodes.value as Node[], edges.value as Edge[])
-  void window.open('/preview', '_blank')
-}
-
-function onShare(): void {
-  save(nodes.value as Node[], edges.value as Edge[])
-  navigator.clipboard.writeText(window.location.origin + '/preview').then(() => {
-    alert('Preview link copied to clipboard!')
-  })
-}
-
-// ─── Reset ────────────────────────────────────────────────────────────────────
-
-function onReset() {
-  nodes.value = []
-  edges.value = []
-  nextId = 1
-  selectedNodeId.value = null
-  selectedEdgeId.value = null
-  selectedEdgeNodeIds.value = new Set()
-  edgeLabelText.value = ''
-  pendingConnection.value = null
-  pendingOptionId.value = ''
-  startNodeId.value = null
-  draggingIndex.value = null
-  resetFieldForm()
+function relativeTime(ts: number): string {
+  const diff = Math.max(0, Date.now() - ts)
+  const m = Math.floor(diff / 60_000)
+  if (m < 1) return 'just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `${d}d ago`
+  const mo = Math.floor(d / 30)
+  return `${mo}mo ago`
 }
 </script>
 
 <template>
-  <div class="h-screen bg-bg flex flex-col">
-    <AppNav
-      show-reset
-      show-fit-view
-      show-preview
-      show-share
-      @reset="onReset"
-      @fit-view="fitView({ padding: 0.2 })"
-      @preview="onPreview"
-      @share="onShare"
-    />
+  <div class="min-h-screen bg-bg flex flex-col">
+    <AppNav />
 
-    <div class="grow flex overflow-hidden">
-      <!-- Sidebar -->
-      <aside class="w-75 h-full bg-surface border-r border-border flex flex-col divide-y divide-border shrink-0">
-        <!-- Main panel -->
-        <div class="p-4 shrink-0">
-          <ConnectionPanel
-            v-if="panelMode === 'pendingConnection'"
-            :source-options="pendingSourceOptions"
-            :option-id="pendingOptionId"
-            @update:option-id="pendingOptionId = $event"
-            @confirm="onConfirmConnection"
-            @cancel="onCancelConnection"
-          />
-
-          <EdgePanel
-            v-else-if="panelMode === 'editAnswer'"
-            :edge-label-text="edgeLabelText"
-            @update:edge-label-text="edgeLabelText = $event"
-            @save="onSaveEdgeLabel"
-            @delete="onDeleteEdge"
-          />
-
-          <FieldPanel
-            v-else
-            :mode="panelMode as 'addField' | 'editField'"
-            :field-label="fieldLabel"
-            :field-type="fieldType"
-            :field-required="fieldRequired"
-            :field-options="fieldOptions"
-            :new-option-text="newOptionText"
-            :route-target-options="routeTargetOptions"
-            @update:field-label="fieldLabel = $event"
-            @update:field-type="fieldType = $event"
-            @update:field-required="fieldRequired = $event"
-            @update:new-option-text="newOptionText = $event"
-            @add-option="onAddOption"
-            @remove-option="onRemoveOption"
-            @set-option-target="onSetOptionTarget"
-            @save="onSave"
-          />
+    <main class="grow px-6 py-8 max-w-5xl mx-auto w-full flex flex-col gap-y-8">
+      <!-- Header -->
+      <div class="flex items-center justify-between gap-x-4">
+        <div class="flex flex-col gap-y-1">
+          <h1 class="text-text font-head font-bold text-2xl">Your flows</h1>
+          <p class="text-muted font-mono text-xs">Create, edit, and publish conditional forms.</p>
         </div>
+        <button
+          class="flex items-center gap-x-2 px-4 py-2 bg-accent text-bg text-sm font-mono font-bold rounded-lg hover:brightness-90 transition"
+          @click="onCreate"
+        >
+          <span class="text-base leading-none">+</span>
+          Create flow
+        </button>
+      </div>
 
-        <!-- Field list -->
-        <FieldList
-          v-if="nodes.length"
-          :nodes="nodes"
-          :start-node-id="startNodeId"
-          :selected-edge-node-ids="selectedEdgeNodeIds"
-          :dragging-index="draggingIndex"
-          @set-start="setStartNode"
-          @drag-start="onDragStart"
-          @drag-over="onDragOver"
-          @drag-end="onDragEnd"
-          @reorganize="reorganize"
-        />
-      </aside>
+      <!-- Empty state -->
+      <div
+        v-if="!flows.length"
+        class="grow flex flex-col items-center justify-center gap-y-4 text-center px-6 py-16 border border-dashed border-border rounded-xl"
+      >
+        <AlertCircle class="w-12 h-12 text-muted" />
+        <p class="text-muted font-mono text-sm">No flows yet. Create your first one to get started.</p>
+        <button
+          class="px-5 py-2 bg-accent text-bg text-sm font-mono font-bold rounded-lg hover:brightness-90 transition"
+          @click="onCreate"
+        >
+          Create flow
+        </button>
+      </div>
 
-      <!-- Canvas -->
-      <main class="w-full h-full relative">
-        <FlowCanvas
-          :nodes="nodes"
-          :edges="edges"
-          @update:nodes="nodes = $event"
-          @update:edges="edges = $event"
-          @node-click="onNodeClick"
-          @edge-click="onEdgeClick"
-          @pane-click="onPaneClick"
-          @connect="onConnect"
-        />
-      </main>
-    </div>
+      <!-- Grid -->
+      <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          v-for="flow in flows"
+          :key="flow.id"
+          class="flex flex-col gap-y-4 p-4 bg-surface border border-border rounded-xl hover:border-accent transition-colors group"
+        >
+          <!-- Top: name + status -->
+          <div class="flex items-start justify-between gap-x-2">
+            <input
+              v-if="renamingId === flow.id"
+              v-model="renameDraft"
+              autofocus
+              class="bg-surface-2 border border-accent focus:outline-none px-2 py-1 text-text text-sm font-mono rounded grow"
+              @keydown.enter="commitRename"
+              @keydown.esc="cancelRename"
+              @blur="commitRename"
+            />
+            <button
+              v-else
+              class="text-text font-head font-bold text-base text-left hover:text-accent transition-colors truncate"
+              @click="onOpen(flow.id)"
+            >
+              {{ flow.name }}
+            </button>
+
+            <span
+              class="shrink-0 flex items-center gap-x-1.5 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border"
+              :class="flow.status === 'published'
+                ? 'border-accent text-accent bg-accent/10'
+                : 'border-border text-muted bg-surface-2'"
+            >
+              <span class="w-1.5 h-1.5 rounded-full" :class="flow.status === 'published' ? 'bg-accent' : 'bg-muted'" />
+              {{ flow.status }}
+            </span>
+          </div>
+
+          <!-- Meta -->
+          <div class="flex items-center gap-x-3 text-[11px] font-mono text-muted">
+            <span>{{ flow.nodes.length }} {{ flow.nodes.length === 1 ? 'field' : 'fields' }}</span>
+            <span class="opacity-50">·</span>
+            <span>Updated {{ relativeTime(flow.updatedAt) }}</span>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-x-2 flex-wrap pt-2 border-t border-border">
+            <button
+              class="px-2.5 py-1 text-xs font-mono text-text hover:text-accent border border-border hover:border-accent rounded transition-colors"
+              @click="onOpen(flow.id)"
+            >
+              Open
+            </button>
+            <button
+              class="px-2.5 py-1 text-xs font-mono text-muted hover:text-accent border border-border hover:border-accent rounded transition-colors"
+              @click="startRename(flow.id, flow.name)"
+            >
+              Rename
+            </button>
+            <button
+              class="px-2.5 py-1 text-xs font-mono border rounded transition-colors"
+              :class="flow.status === 'published'
+                ? 'border-border text-muted hover:text-accent hover:border-accent'
+                : 'border-accent text-accent hover:bg-accent/10'"
+              @click="togglePublish(flow.id, flow.status)"
+            >
+              {{ flow.status === 'published' ? 'Unpublish' : 'Publish' }}
+            </button>
+            <button
+              class="ml-auto px-2.5 py-1 text-xs font-mono text-muted hover:text-accent-3 border border-border hover:border-accent-3 rounded transition-colors"
+              @click="onDelete(flow.id, flow.name)"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 </template>

@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import type { Node, Edge } from '@vue-flow/core'
-import { useFormStore } from '~/composables/useFormStore'
+import { useRoute } from 'vue-router'
+import { useFlowStore } from '~/composables/useFlowStore'
 import type { FieldOption, QuestionNodeData } from '~/types/flow'
 
-const { load } = useFormStore()
+const route = useRoute<'/preview/[id]'>()
+const flowId = String(route.params.id)
+const { getFlow } = useFlowStore()
 
-const form = load()
-const nodes: Node[] = form?.nodes ?? []
-const edges: Edge[] = form?.edges ?? []
+const flow = getFlow(flowId)
+const nodes: Node[] = flow?.nodes ?? []
+const edges: Edge[] = flow?.edges ?? []
 
 // Build adjacency map: nodeId -> outgoing edges
 const outgoing = new Map<string, Edge[]>()
@@ -20,10 +23,9 @@ const startNode = nodes.find((n) => n.data.isStart) ?? nodes[0] ?? null
 // ─── Form traversal state ─────────────────────────────────────────────────────
 
 const currentNodeId = ref<string | null>(startNode?.id ?? null)
-const history = ref<string[]>([]) // stack of visited node IDs
+const history = ref<string[]>([])
 const completed = ref(false)
 
-// Current field values keyed by nodeId
 const answers = ref<Record<string, string | string[]>>({})
 
 const currentNode = computed((): Node | null =>
@@ -49,9 +51,33 @@ const currentAnswer = computed({
   },
 })
 
-// Progress
-const totalNodes = nodes.length
-const visitedCount = computed(() => history.value.length + (currentNodeId.value ? 1 : 0))
+// ─── Progress (chain-aware) ───────────────────────────────────────────────────
+
+function chainLength(nodeId: string | null): number {
+  let count = 0
+  let id = nodeId
+  const seen = new Set<string>()
+  while (id && !seen.has(id)) {
+    seen.add(id)
+    count++
+    id = outgoing.get(id)?.[0]?.target ?? null
+  }
+  return count
+}
+
+const totalSteps = computed(() => history.value.length + chainLength(currentNodeId.value))
+const visitedCount = computed(() => history.value.length + 1)
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+const validationError = ref<string | null>(null)
+
+function isAnswered(): boolean {
+  const ft = currentData.value.fieldType
+  if (ft === 'checkbox') return true
+  if (ft === 'multiselect') return Array.isArray(currentAnswer.value) && currentAnswer.value.length > 0
+  return typeof currentAnswer.value === 'string' && currentAnswer.value.trim() !== ''
+}
 
 function navigate(targetNodeId: string) {
   if (currentNodeId.value) history.value.push(currentNodeId.value)
@@ -59,18 +85,27 @@ function navigate(targetNodeId: string) {
 }
 
 function onNext() {
-  // Single branch: follow the first outgoing edge
-  const nextEdge = currentEdges.value[0]
-  if (nextEdge) {
-    navigate(nextEdge.target)
-  } else {
-    completed.value = true
+  if (currentData.value.required && !isAnswered()) {
+    validationError.value = 'This field is required.'
+    return
   }
-}
+  validationError.value = null
 
-function onChoose(edge: Edge) {
-  // For multi-branch: follow the chosen edge
-  navigate(edge.target)
+  const edges = currentEdges.value
+  if (edges.length === 0) {
+    completed.value = true
+    return
+  }
+
+  const ft = currentData.value.fieldType
+  if (ft === 'dropdown' || ft === 'radio') {
+    const answer = getStringAnswer()
+    const selectedOpt = (currentData.value.options as FieldOption[])?.find((o) => o.id === answer)
+    const matchedEdge = edges.find((e) => e.label === selectedOpt?.label) ?? edges[0]
+    navigate(matchedEdge.target)
+  } else {
+    navigate(edges[0].target)
+  }
 }
 
 function onBack() {
@@ -88,6 +123,7 @@ function onRestart() {
 
 function setAnswer(val: string | string[]) {
   currentAnswer.value = val
+  validationError.value = null
 }
 
 function toggleMultiValue(val: string) {
@@ -95,6 +131,7 @@ function toggleMultiValue(val: string) {
   const idx = curr.indexOf(val)
   if (idx === -1) setAnswer([...curr, val])
   else setAnswer(curr.filter((v) => v !== val))
+  validationError.value = null
 }
 
 function isMultiSelected(val: string): boolean {
@@ -108,17 +145,27 @@ function getStringAnswer(): string {
 
 <template>
   <div class="min-h-screen bg-bg flex flex-col">
-    <AppNav show-back back-label="Dashboard" back-to="/dashboard" />
+    <AppNav show-back back-label="Builder" :back-to="`/flows/${flowId}`" />
+
+    <!-- Preview-mode banner -->
+    <div
+      v-if="flow"
+      class="bg-surface-2 border-b border-border px-4 py-2 text-center text-[11px] font-mono text-muted"
+    >
+      Preview mode — visits and completions are not counted in stats.
+    </div>
 
     <!-- No form -->
     <div v-if="!startNode" class="grow flex flex-col items-center justify-center gap-y-4 text-center px-6">
       <AlertCircle class="w-12 h-12 text-muted" />
-      <p class="text-muted font-mono text-sm">No form found. Build one in the dashboard first.</p>
+      <p class="text-muted font-mono text-sm">
+        {{ flow ? 'This flow has no fields yet. Add some in the builder first.' : 'Flow not found.' }}
+      </p>
       <RouterLink
-        to="/dashboard"
+        :to="flow ? `/flows/${flowId}` : '/dashboard'"
         class="px-5 py-2 bg-accent text-bg text-sm font-mono font-bold rounded-lg hover:brightness-90 transition"
       >
-        Open Builder
+        {{ flow ? 'Open Builder' : 'Back to flows' }}
       </RouterLink>
     </div>
 
@@ -147,11 +194,11 @@ function getStringAnswer(): string {
           <div class="grow h-0.5 bg-border rounded-full overflow-hidden">
             <div
               class="h-full bg-accent transition-all duration-300 rounded-full"
-              :style="{ width: `${(visitedCount / totalNodes) * 100}%` }"
+              :style="{ width: `${(visitedCount / totalSteps) * 100}%` }"
             />
           </div>
           <span class="text-[10px] font-mono text-muted shrink-0">
-            {{ visitedCount }} / {{ totalNodes }}
+            {{ visitedCount }} / {{ totalSteps }}
           </span>
         </div>
 
@@ -165,31 +212,41 @@ function getStringAnswer(): string {
           </div>
 
           <!-- Text -->
-          <input
-            v-if="currentData.fieldType === 'text'"
-            :value="getStringAnswer()"
-            type="text"
-            :placeholder="`Enter ${currentData.label?.toLowerCase()}...`"
-            class="w-full bg-surface-2 border border-border focus:border-accent focus:outline-none px-3 py-2 text-text text-sm rounded-lg font-mono transition-colors"
-            @input="setAnswer(($event.target as HTMLInputElement).value)"
-          />
+          <template v-if="currentData.fieldType === 'text'">
+            <input
+              :value="getStringAnswer()"
+              type="text"
+              :placeholder="currentData.placeholder || `Enter ${currentData.label?.toLowerCase()}...`"
+              :maxlength="currentData.maxLength || undefined"
+              class="w-full bg-surface-2 border border-border focus:border-accent focus:outline-none px-3 py-2 text-text text-sm rounded-lg font-mono transition-colors"
+              @input="setAnswer(($event.target as HTMLInputElement).value)"
+            />
+            <p v-if="currentData.maxLength" class="text-[10px] font-mono text-muted text-right">
+              {{ getStringAnswer().length }} / {{ currentData.maxLength }}
+            </p>
+          </template>
 
           <!-- Textarea -->
-          <textarea
-            v-else-if="currentData.fieldType === 'textarea'"
-            :value="getStringAnswer()"
-            rows="4"
-            :placeholder="`Enter ${currentData.label?.toLowerCase()}...`"
-            class="w-full bg-surface-2 border border-border focus:border-accent focus:outline-none px-3 py-2 text-text text-sm rounded-lg font-mono transition-colors resize-none"
-            @input="setAnswer(($event.target as HTMLTextAreaElement).value)"
-          />
+          <template v-else-if="currentData.fieldType === 'textarea'">
+            <textarea
+              :value="getStringAnswer()"
+              rows="4"
+              :placeholder="currentData.placeholder || `Enter ${currentData.label?.toLowerCase()}...`"
+              :maxlength="currentData.maxLength || undefined"
+              class="w-full bg-surface-2 border border-border focus:border-accent focus:outline-none px-3 py-2 text-text text-sm rounded-lg font-mono transition-colors resize-none"
+              @input="setAnswer(($event.target as HTMLTextAreaElement).value)"
+            />
+            <p v-if="currentData.maxLength" class="text-[10px] font-mono text-muted text-right">
+              {{ getStringAnswer().length }} / {{ currentData.maxLength }}
+            </p>
+          </template>
 
           <!-- Number -->
           <input
             v-else-if="currentData.fieldType === 'number'"
             :value="getStringAnswer()"
             type="number"
-            placeholder="Enter a number..."
+            :placeholder="currentData.placeholder || 'Enter a number...'"
             class="w-full bg-surface-2 border border-border focus:border-accent focus:outline-none px-3 py-2 text-text text-sm rounded-lg font-mono transition-colors"
             @input="setAnswer(($event.target as HTMLInputElement).value)"
           />
@@ -267,6 +324,11 @@ function getStringAnswer(): string {
           </div>
         </div>
 
+        <!-- Validation error -->
+        <p v-if="validationError" class="text-accent-3 text-xs font-mono -mt-2">
+          {{ validationError }}
+        </p>
+
         <!-- Navigation -->
         <div class="flex items-center justify-between gap-x-3">
           <button
@@ -279,21 +341,7 @@ function getStringAnswer(): string {
           </button>
           <div v-else />
 
-          <!-- Multi-branch: show option buttons as next actions -->
-          <div v-if="isMultiBranch && currentEdges.length > 0" class="flex flex-wrap gap-2 justify-end">
-            <button
-              v-for="edge in currentEdges"
-              :key="edge.id"
-              class="px-4 py-2 bg-accent text-bg text-sm font-mono font-bold rounded-lg hover:brightness-90 transition"
-              @click="onChoose(edge)"
-            >
-              {{ edge.label || 'Next' }}
-            </button>
-          </div>
-
-          <!-- Single branch or no options connected yet -->
           <button
-            v-else
             class="px-5 py-2 bg-accent text-bg text-sm font-mono font-bold rounded-lg hover:brightness-90 transition"
             @click="onNext"
           >

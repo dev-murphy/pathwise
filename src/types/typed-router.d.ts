@@ -52,18 +52,46 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/preview': RouteRecordInfo<
-      '/preview',
-      '/preview',
+    '/docs/changelog': RouteRecordInfo<
+      '/docs/changelog',
+      '/docs/changelog',
       Record<never, never>,
       Record<never, never>,
       | never
     >,
-    '/stats': RouteRecordInfo<
-      '/stats',
-      '/stats',
+    '/docs/guide': RouteRecordInfo<
+      '/docs/guide',
+      '/docs/guide',
       Record<never, never>,
       Record<never, never>,
+      | never
+    >,
+    '/flows/[id]': RouteRecordInfo<
+      '/flows/[id]',
+      '/flows/:id',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
+    '/p/[id]': RouteRecordInfo<
+      '/p/[id]',
+      '/p/:id',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
+    '/preview/[id]': RouteRecordInfo<
+      '/preview/[id]',
+      '/preview/:id',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
+    '/stats/[id]': RouteRecordInfo<
+      '/stats/[id]',
+      '/stats/:id',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
       | never
     >,
   }
@@ -97,15 +125,39 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
-    'src/pages/preview.vue': {
+    'src/pages/docs/changelog.vue': {
       routes:
-        | '/preview'
+        | '/docs/changelog'
       views:
         | never
     }
-    'src/pages/stats.vue': {
+    'src/pages/docs/guide.vue': {
       routes:
-        | '/stats'
+        | '/docs/guide'
+      views:
+        | never
+    }
+    'src/pages/flows/[id].vue': {
+      routes:
+        | '/flows/[id]'
+      views:
+        | never
+    }
+    'src/pages/p/[id].vue': {
+      routes:
+        | '/p/[id]'
+      views:
+        | never
+    }
+    'src/pages/preview/[id].vue': {
+      routes:
+        | '/preview/[id]'
+      views:
+        | never
+    }
+    'src/pages/stats/[id].vue': {
+      routes:
+        | '/stats/[id]'
       views:
         | never
     }

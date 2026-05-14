@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import { DevTools } from "@vitejs/devtools";
+import Markdown from 'vite-plugin-md';
 import Tailwindcss from "@tailwindcss/vite";
 import Vue from "@vitejs/plugin-vue";
 import VueRouter from "vue-router/vite";
@@ -22,9 +23,13 @@ export default defineConfig({
       dts: "src/types/components.d.ts",
     }),
     VueRouter({
+      extensions: ['.vue','.md'],
       dts: "src/types/typed-router.d.ts",
     }),
-    Vue(),
+    Vue({
+      include: [/\.vue$/, /\.md$/],
+    }),
+    Markdown(),
     Tailwindcss(),
     WebfontDownload(),
     DevTools(),

@@ -19,6 +19,7 @@ declare module 'vue' {
     ChevronDown: typeof import('./../components/icons/ChevronDown.vue')['default']
     ConnectionPanel: typeof import('./../components/dashboard/ConnectionPanel.vue')['default']
     Delete: typeof import('./../components/icons/Delete.vue')['default']
+    DocsLayout: typeof import('./../components/layout/DocsLayout.vue')['default']
     DragHandle: typeof import('./../components/icons/DragHandle.vue')['default']
     Dropdown: typeof import('./../components/icons/Dropdown.vue')['default']
     EdgePanel: typeof import('./../components/dashboard/EdgePanel.vue')['default']

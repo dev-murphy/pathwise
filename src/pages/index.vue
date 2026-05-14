@@ -1,22 +1,37 @@
 <script setup lang="ts">
 import logoUrl from '~/assets/images/logo.png'
+import pkg from '../../package.json'
 </script>
 
 <template>
   <div class="min-h-screen bg-bg flex flex-col">
     <!-- Nav -->
-    <nav class="border-b border-border px-6 py-4 flex items-center justify-between">
+    <nav class="bg-surface border-b border-border px-4 h-[65px] flex items-center justify-between shrink-0">
       <div class="flex items-center gap-x-2 select-none">
-        <img :src="logoUrl" alt="Pathwise" class="w-8 aspect-square" />
-        <span class="text-accent text-xl font-head font-black uppercase">Pathwise</span>
+        <img :src="logoUrl" alt="Pathwise" class="w-7 aspect-square" />
+        <span class="text-accent text-lg font-head font-black uppercase">Pathwise</span>
       </div>
-      <RouterLink
-        to="/dashboard"
-        class="flex items-center gap-x-1.5 text-sm font-mono text-muted hover:text-accent transition-colors duration-200"
-      >
-        <LayoutDashboard class="w-4 h-4" />
-        Open Builder
-      </RouterLink>
+      <div class="flex items-center gap-x-4">
+        <RouterLink
+          to="/docs/guide"
+          class="text-xs font-mono text-muted hover:text-accent transition-colors duration-200"
+        >
+          Guide
+        </RouterLink>
+        <RouterLink
+          to="/docs/changelog"
+          class="text-xs font-mono text-muted hover:text-accent transition-colors duration-200"
+        >
+          v{{ pkg.version }}
+        </RouterLink>
+        <RouterLink
+          to="/dashboard"
+          class="flex items-center gap-x-1.5 text-sm font-mono text-muted hover:text-accent transition-colors duration-200"
+        >
+          <LayoutDashboard class="w-4 h-4" />
+          Open Builder
+        </RouterLink>
+      </div>
     </nav>
 
     <!-- Hero -->
@@ -45,10 +60,10 @@ import logoUrl from '~/assets/images/logo.png'
             Open Builder →
           </RouterLink>
           <RouterLink
-            to="/preview"
+            to="/docs/guide"
             class="px-6 py-2.5 bg-surface-2 border border-border text-text text-sm font-mono rounded-lg hover:border-accent hover:text-accent transition-all duration-200"
           >
-            Preview Demo
+            Read the guide
           </RouterLink>
         </div>
       </div>

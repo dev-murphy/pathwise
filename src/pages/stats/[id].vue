@@ -1,24 +1,26 @@
 <script setup lang="ts">
 import type { Node, Edge } from '@vue-flow/core'
-import { useFormStore } from '~/composables/useFormStore'
+import { useRoute } from 'vue-router'
+import { useFlowStore } from '~/composables/useFlowStore'
 import { FIELD_TYPE_LABELS } from '~/types/flow'
 import { FIELD_TYPE_ICONS } from '~/types/icons'
 import type { FieldType } from '~/types/flow'
 
-const { load } = useFormStore()
+const route = useRoute<'/stats/[id]'>()
+const flowId = String(route.params.id)
+const { getFlow } = useFlowStore()
 
-const form = load()
-const nodes: Node[] = form?.nodes ?? []
-const edges: Edge[] = form?.edges ?? []
+const flow = getFlow(flowId)
+const nodes: Node[] = flow?.nodes ?? []
+const edges: Edge[] = flow?.edges ?? []
 
-// ─── Derived stats ────────────────────────────────────────────────────────────
+// ─── Derived structural stats ─────────────────────────────────────────────────
 
 const totalFields = nodes.length
 const totalConnections = edges.length
 const requiredCount = nodes.filter((n) => n.data.required).length
 const startNode = nodes.find((n) => n.data.isStart)
 
-// Field type breakdown
 const typeCounts = computed(() => {
   const counts: Partial<Record<FieldType, number>> = {}
   nodes.forEach((n) => {
@@ -33,7 +35,6 @@ const typeCounts = computed(() => {
   })).sort((a, b) => b.count - a.count)
 })
 
-// Reachability: nodes with no incoming edges (other than start)
 const hasIncoming = new Set<string>(edges.map((e) => e.target))
 const hasOutgoing = new Set<string>(edges.map((e) => e.source))
 
@@ -51,18 +52,38 @@ const stats = computed(() => [
   { label: 'Required fields', value: requiredCount },
   { label: 'Branching fields', value: multiBranchFields.length },
 ])
+
+// ─── Usage analytics (only from /p/:id) ───────────────────────────────────────
+
+const visits = computed(() => flow?.analytics?.visits ?? 0)
+const completions = computed(() => flow?.analytics?.completions ?? 0)
+const completionRate = computed(() =>
+  visits.value > 0 ? Math.round((completions.value / visits.value) * 100) : 0,
+)
 </script>
 
 <template>
   <div class="min-h-screen bg-bg flex flex-col">
-    <AppNav show-back back-label="Dashboard" back-to="/dashboard" />
+    <AppNav show-back back-label="Builder" :back-to="`/flows/${flowId}`" />
 
-    <!-- No form -->
-    <div v-if="!nodes.length" class="grow flex flex-col items-center justify-center gap-y-4 text-center px-6">
+    <!-- No flow -->
+    <div v-if="!flow" class="grow flex flex-col items-center justify-center gap-y-4 text-center px-6">
       <ChartBar class="w-12 h-12 text-muted" />
-      <p class="text-muted font-mono text-sm">No form data found. Build one in the dashboard first.</p>
+      <p class="text-muted font-mono text-sm">Flow not found.</p>
       <RouterLink
         to="/dashboard"
+        class="px-5 py-2 bg-accent text-bg text-sm font-mono font-bold rounded-lg hover:brightness-90 transition"
+      >
+        Back to flows
+      </RouterLink>
+    </div>
+
+    <!-- No fields -->
+    <div v-else-if="!nodes.length" class="grow flex flex-col items-center justify-center gap-y-4 text-center px-6">
+      <ChartBar class="w-12 h-12 text-muted" />
+      <p class="text-muted font-mono text-sm">No fields in this flow yet. Add some in the builder first.</p>
+      <RouterLink
+        :to="`/flows/${flowId}`"
         class="px-5 py-2 bg-accent text-bg text-sm font-mono font-bold rounded-lg hover:brightness-90 transition"
       >
         Open Builder
@@ -73,7 +94,7 @@ const stats = computed(() => [
       <!-- Header -->
       <div class="flex items-center gap-x-3">
         <ChartBar class="w-6 h-6 text-accent" />
-        <h1 class="text-text font-head font-bold text-xl">Form Stats</h1>
+        <h1 class="text-text font-head font-bold text-xl">{{ flow.name }} — Stats</h1>
         <span v-if="startNode" class="text-xs font-mono text-muted ml-auto">
           Start: {{ startNode.data.label }}
         </span>
@@ -88,6 +109,28 @@ const stats = computed(() => [
         >
           <span class="text-2xl font-head font-black text-accent">{{ stat.value }}</span>
           <span class="text-[11px] font-mono text-muted uppercase tracking-wider">{{ stat.label }}</span>
+        </div>
+      </div>
+
+      <!-- Usage (publish-link analytics) -->
+      <div class="flex flex-col gap-y-3">
+        <div class="flex items-baseline gap-x-3">
+          <h2 class="text-xs font-mono text-muted uppercase tracking-widest">Usage</h2>
+          <span class="text-[10px] font-mono text-muted italic">From the publish link only — preview visits are not counted.</span>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="flex flex-col gap-y-1 p-4 bg-surface border border-border rounded-xl">
+            <span class="text-2xl font-head font-black text-accent">{{ visits }}</span>
+            <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Visits</span>
+          </div>
+          <div class="flex flex-col gap-y-1 p-4 bg-surface border border-border rounded-xl">
+            <span class="text-2xl font-head font-black text-accent">{{ completions }}</span>
+            <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Completions</span>
+          </div>
+          <div class="flex flex-col gap-y-1 p-4 bg-surface border border-border rounded-xl">
+            <span class="text-2xl font-head font-black text-accent">{{ completionRate }}%</span>
+            <span class="text-[11px] font-mono text-muted uppercase tracking-wider">Completion rate</span>
+          </div>
         </div>
       </div>
 

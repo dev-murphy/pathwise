@@ -31,8 +31,8 @@ const router = useRouter()
 </script>
 
 <template>
-  <nav class="bg-surface border-b border-border px-4 py-3 shrink-0">
-    <div class="flex items-center justify-between text-text">
+  <nav class="bg-surface border-b border-border px-4 h-[65px] shrink-0 flex items-center">
+    <div class="flex items-center justify-between text-text w-full">
       <!-- Left: logo + optional back -->
       <div class="flex items-center gap-x-3">
         <RouterLink to="/" class="flex items-center gap-x-2 select-none">
